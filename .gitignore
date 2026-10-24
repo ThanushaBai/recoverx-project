@@ -1,0 +1,5 @@
+*.tar
+*.log
+restored-data.txt
+test-backup.txt
+.env

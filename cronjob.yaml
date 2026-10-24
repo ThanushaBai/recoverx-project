@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sentinel-backup
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup-worker
+            image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+            command: ["/bin/sh", "-c"]
+            args:
+              - |
+                echo "Connecting to MinIO..."
+                mc alias set backupstore http://192.168.0.8:9000 admin LabRotation2026d21f
+                TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+                BACKUP_FILE="app-backup-$TIMESTAMP.txt"
+                echo "Backup generated at $TIMESTAMP from pod $(hostname)" > /tmp/$BACKUP_FILE
+                echo "Uploading $BACKUP_FILE..."
+                mc cp /tmp/$BACKUP_FILE backupstore/sentinel-backups/$BACKUP_FILE --retention-mode COMPLIANCE --retention-duration 1d
+                echo "Backup successful!"
+          restartPolicy: OnFailure
