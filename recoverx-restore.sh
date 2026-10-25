@@ -2,7 +2,8 @@
 # 1. Get the name of the running Kubernetes pod
 POD_NAME=$(kubectl get pods -l app=recoverx-app -o jsonpath="{.items[0].metadata.name}")
 
-# 2. Find the latest backup file in MinIO
+# 2. Find the latest backup file in MinIO (using environment variables)
+export MC_HOST_localminio="http://$MINIO_USER:$MINIO_PASS@192.168.0.8:9000"
 LATEST_BACKUP=$(mc ls localminio/sentinel-backups/ | grep "db-backup" | tail -n 1 | awk '{print $NF}')
 
 if [ -z "$LATEST_BACKUP" ]; then
