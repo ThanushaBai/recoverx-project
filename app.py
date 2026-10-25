@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template_string
 import sqlite3
 import os
-import datetime
 
 app = Flask(__name__)
 DB_FILE = "/app/data/app.db"
@@ -18,7 +17,6 @@ def init_db():
 
 init_db()
 
-# --- API ROUTES ---
 @app.route('/api/notes', methods=['GET'])
 def get_notes():
     conn = sqlite3.connect(DB_FILE)
@@ -53,183 +51,124 @@ def ransomware():
 def health():
     return jsonify({"status": "ok"}), 200
 
-# --- FRONTEND (RecoverX Platform) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RecoverX | Immutable Protection</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>RecoverX | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b1120;
-            --panel: rgba(30, 41, 59, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-            --cyan: #06b6d4;
-            --danger: #ef4444;
-            --success: #10b981;
-            --text: #f8fafc;
-            --muted: #94a3b8;
+            --bg: #050505;
+            --panel: rgba(10, 15, 30, 0.7);
+            --border: rgba(0, 255, 255, 0.3);
+            --cyan: #00ffff;
+            --danger: #ff003c;
+            --success: #00ff66;
+            --text: #e0e0e0;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text); min-height: 100vh; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Share Tech Mono', monospace; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; overflow-x: hidden; }
+        
+        .grid-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+                   background-image: linear-gradient(rgba(0,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.05) 1px, transparent 1px); 
+                   background-size: 30px 30px; z-index: -1; }
 
-        /* --- LANDING PAGE --- */
-        #landing-page { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; background: radial-gradient(circle at top, #1e293b 0%, #0b1120 100%); }
-        #landing-page h1 { font-size: 56px; font-weight: 700; margin-bottom: 20px; background: linear-gradient(to right, #06b6d4, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        #landing-page p { font-size: 20px; color: var(--muted); max-width: 600px; margin-bottom: 40px; line-height: 1.6; }
-        .btn-primary { background: var(--cyan); color: #000; padding: 15px 40px; border-radius: 8px; font-weight: 600; text-decoration: none; cursor: pointer; transition: 0.2s; border: none; font-size: 18px; }
-        .btn-primary:hover { background: #22d3ee; box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 30px; }
+        .header h1 { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); font-size: 24px; letter-spacing: 2px; }
+        .status { color: var(--success); animation: blink 2s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* --- AUTH MODAL --- */
-        #auth-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); align-items: center; justify-content: center; z-index: 100; }
-        .auth-box { background: var(--panel); border: 1px solid var(--border); padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; text-align: center; }
-        .auth-box input { width: 100%; padding: 12px; margin: 20px 0; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; }
-
-        /* --- DASHBOARD --- */
-        #dashboard { display: none; height: 100vh; overflow: hidden; }
-        .nav { width: 250px; background: var(--panel); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-        .nav-brand { font-size: 24px; font-weight: 700; color: var(--cyan); margin-bottom: 40px; display: flex; align-items: center; gap: 10px;}
-        .nav-item { padding: 12px 15px; color: var(--muted); border-radius: 8px; margin-bottom: 5px; cursor: pointer; font-weight: 500; }
-        .nav-item:hover, .nav-item.active { background: rgba(6, 182, 212, 0.1); color: var(--cyan); }
+        .layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-        .card-title { font-size: 14px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;}
-        .card-value { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        
-        .split-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        
-        /* Notes Section */
-        .notes-section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        .panel { background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: 0 0 20px rgba(0, 255, 255, 0.05); }
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .input-group input { flex: 1; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; }
-        .data-stream { display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;}
-        .data-node { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 3px solid var(--cyan); }
+        input { flex: 1; padding: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: var(--cyan); outline: none; }
+        input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,255,255,0.3); }
+        button { padding: 12px 20px; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        button:hover { background: var(--cyan); color: var(--bg); }
+
+        .data-stream { display: flex; flex-direction: column; gap: 10px; }
+        .data-node { background: rgba(0, 255, 255, 0.05); border-left: 3px solid var(--cyan); padding: 15px; display: flex; justify-content: space-between; align-items: center; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        /* Ransomware Section */
-        .danger-zone { border-color: rgba(239, 68, 68, 0.3); }
-        .danger-btn { width: 100%; padding: 15px; background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;}
-        .danger-btn:hover { background: var(--danger); color: white; }
-        .restore-btn { width: 100%; padding: 15px; background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid var(--success); border-radius: 8px; font-weight: bold; cursor: pointer; display: none;}
-        .restore-btn:hover { background: var(--success); color: white; }
+        .danger-zone { border-color: var(--danger); box-shadow: 0 0 20px rgba(255, 0, 60, 0.1); }
+        .danger-title { color: var(--danger); text-shadow: 0 0 10px var(--danger); margin-bottom: 15px; font-size: 18px; }
+        .danger-btn { width: 100%; border-color: var(--danger); color: var(--danger); padding: 20px; font-size: 18px; font-weight: bold; }
+        .danger-btn:hover { background: var(--danger); color: white; box-shadow: 0 0 20px var(--danger); }
+        .log { margin-top: 20px; font-size: 12px; color: var(--text); opacity: 0.7; height: 150px; overflow-y: auto; }
+
+        .glitch { animation: glitchAnim 0.5s linear infinite; }
+        @keyframes glitchAnim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); text-shadow: 2px 0 red, -2px 0 blue; }
+            40% { transform: translate(-5px, -5px); text-shadow: 2px 0 red, -2px 0 blue; }
+            60% { transform: translate(5px, 5px); text-shadow: 2px 0 red, -2px 0 blue; }
+            80% { transform: translate(5px, -5px); text-shadow: 2px 0 red, -2px 0 blue; }
+            100% { transform: translate(0); }
+        }
     </style>
 </head>
 <body>
+    <div class="grid-bg"></div>
 
-    <!-- 1. LANDING PAGE -->
-    <div id="landing-page">
-        <h1>RecoverX Platform</h1>
-        <p>Immutable Protection. Verified Recovery. <br>The next-generation cloud-native data resilience platform powered by Kubernetes and WORM storage.</p>
-        <button class="btn-primary" onclick="showAuth()">Access Dashboard</button>
+    <div class="header">
+        <h1>🛡️ RecoverX // DATA VAULT</h1>
+        <div>SYSTEM STATUS: <span class="status">ONLINE</span></div>
     </div>
 
-    <!-- 2. AUTH MODAL -->
-    <div id="auth-modal">
-        <div class="auth-box">
-            <h2 style="margin-bottom: 10px;">Secure Login</h2>
-            <p style="color: var(--muted); font-size: 14px;">Enter your email to receive a simulated access code.</p>
-            <input type="email" id="emailInput" placeholder="admin@recoverx.io">
-            <button class="btn-primary" style="width: 100%; padding: 12px;" onclick="sendCode()">Send Code</button>
-        </div>
-    </div>
-
-    <!-- 3. DASHBOARD -->
-    <div id="dashboard" style="display: none; flex-direction: row;">
-        <!-- Sidebar -->
-        <div class="nav">
-            <div class="nav-brand">🛡️ RecoverX</div>
-            <div class="nav-item active">Dashboard</div>
-            <div class="nav-item">Backups</div>
-            <div class="nav-item">Recovery</div>
-            <div class="nav-item">Settings</div>
+    <div class="layout">
+        <div class="panel" id="mainPanel">
+            <h2 style="margin-bottom: 20px; color: var(--cyan);">SECURE TRANSMISSION</h2>
+            <div class="input-group">
+                <input type="text" id="noteInput" placeholder="Enter encrypted payload..." onkeypress="if(event.key === 'Enter') addNote()">
+                <button onclick="addNote()">Transmit</button>
+            </div>
+            <div class="data-stream" id="notesList">
+                <!-- Notes will load here -->
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="header">
-                <h1>System Overview</h1>
-                <div style="color: var(--success); font-weight: 600;">● Cluster Healthy</div>
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="card">
-                    <div class="card-title">App Status</div>
-                    <div class="card-value" style="color: var(--success);">● Running</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Recovery Point (RPO)</div>
-                    <div class="card-value">&lt; 5 mins</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Recovery Time (RTO)</div>
-                    <div class="card-value" style="color: var(--cyan);">~ 10 sec</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">WORM Protection</div>
-                    <div class="card-value">🔒 Active</div>
-                </div>
-            </div>
-
-            <div class="split-layout">
-                <!-- Left: Data Input -->
-                <div class="notes-section">
-                    <h3 style="margin-bottom: 15px;">Live Database (SQLite)</h3>
-                    <div class="input-group">
-                        <input type="text" id="noteInput" placeholder="Add a new record..." onkeypress="if(event.key === 'Enter') addNote()">
-                        <button class="btn-primary" style="padding: 12px 20px; font-size: 14px;" onclick="addNote()">Save</button>
-                    </div>
-                    <div class="data-stream" id="notesList"></div>
-                </div>
-
-                <!-- Right: Simulator -->
-                <div class="card danger-zone">
-                    <h3 style="color: var(--danger); margin-bottom: 15px;">Ransomware Simulator</h3>
-                    <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">Simulate a data-loss event. RecoverX will use MinIO WORM backups to restore the database.</p>
-                    <button class="danger-btn" id="attackBtn" onclick="simulateRansomware()">⚠ Wipe Database</button>
-                    <button class="restore-btn" id="restoreBtn" onclick="restoreData()">🛡 Restore Database</button>
-                </div>
+        <div class="panel danger-zone">
+            <div class="danger-title">WORM BACKUP PROTOCOL</div>
+            <p style="font-size: 12px; margin-bottom: 20px; opacity: 0.8;">
+                Live data is automatically synchronized to a MinIO S3 bucket with Object Lock (Compliance Mode). 
+                This ensures immutability against ransomware.
+            </p>
+            <button class="danger-btn" onclick="simulateRansomware()">⚠ INITIATE RANSOMWARE</button>
+            
+            <div class="log" id="consoleLog">
+                > SYSTEM READY<br>
+                > WORM PROTECTION: ACTIVE<br>
+                > AWAITING INPUT...
             </div>
         </div>
     </div>
 
     <script>
         const API_URL = '/api/notes';
+        const consoleLog = document.getElementById('consoleLog');
 
-        // Auth Logic
-        function showAuth() { document.getElementById('auth-modal').style.display = 'flex'; }
-        function sendCode() {
-            const email = document.getElementById('emailInput').value;
-            if (!email) return alert("Please enter an email.");
-            alert("Simulated Code Sent to " + email + "! (Code is 123456)");
-            const code = prompt("Enter the 6-digit code:");
-            if (code === "123456") {
-                document.getElementById('auth-modal').style.display = 'none';
-                document.getElementById('landing-page').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'flex';
-                fetchNotes();
-            } else {
-                alert("Invalid code.");
-            }
+        function log(msg, color = 'var(--cyan)') {
+            const p = document.createElement('div');
+            p.innerHTML = `> ${msg}`;
+            p.style.color = color;
+            consoleLog.appendChild(p);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
         }
 
-        // Data Logic
         async function fetchNotes() {
             const res = await fetch(API_URL);
             const notes = await res.json();
             const list = document.getElementById('notesList');
             list.innerHTML = '';
-            if(notes.length === 0) list.innerHTML = '<p style="color: var(--muted); font-size: 14px;">No records found.</p>';
+            
             notes.forEach(note => {
                 const div = document.createElement('div');
                 div.className = 'data-node';
-                div.innerHTML = `<span>${note.content}</span>`;
+                div.innerHTML = `<span>${note.content}</span><span style="font-size:10px; opacity:0.5;">ID: ${note.id}</span>`;
                 list.appendChild(div);
             });
         }
@@ -238,36 +177,44 @@ HTML_TEMPLATE = """
             const input = document.getElementById('noteInput');
             const content = input.value.trim();
             if (!content) return;
+            
+            log("ENCRYPTING AND TRANSMITTING...", "var(--success)");
             await fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
             });
             input.value = '';
+            log("TRANSMISSION SECURED.", "var(--success)");
             fetchNotes();
         }
 
         async function simulateRansomware() {
-            document.getElementById('dashboard').style.filter = 'hue-rotate(90deg) contrast(150%)';
+            log("⚠ WARNING: MALWARE DETECTED", "var(--danger)");
+            log("DELETING LIVE DATABASE...", "var(--danger)");
+            
+            document.getElementById('mainPanel').classList.add('glitch');
+
             await fetch('/api/ransomware', { method: 'POST' });
+            
             setTimeout(() => {
-                document.getElementById('dashboard').style.filter = 'none';
+                document.getElementById('mainPanel').classList.remove('glitch');
                 fetchNotes(); 
-                document.getElementById('attackBtn').style.display = 'none';
-                document.getElementById('restoreBtn').style.display = 'block';
+                log("LIVE DATA DESTROYED. SYSTEM OFFLINE.", "var(--danger)");
+                log("ATTEMPTING WORM RECOVERY...", "yellow");
+                
+                setTimeout(() => {
+                    log("CONTACTING MINIO VAULT...", "yellow");
+                    setTimeout(() => {
+                        log("RESTORE SUCCESSFUL. DATA RECOVERED.", "var(--success)");
+                        alert("To complete the drill, run ~/recoverx-restore.sh in your terminal!");
+                        fetchNotes();
+                    }, 1500);
+                }, 1500);
             }, 1000);
         }
 
-        async function restoreData() {
-            document.getElementById('restoreBtn').innerText = "Restoring from MinIO...";
-            setTimeout(() => {
-                document.getElementById('restoreBtn').style.display = 'none';
-                document.getElementById('attackBtn').style.display = 'block';
-                document.getElementById('restoreBtn').innerText = "🛡 Restore Database";
-                alert("Simulation complete! Run ~/recoverx-restore.sh in your terminal and refresh the page to see real data.");
-                fetchNotes();
-            }, 2000);
-        }
+        fetchNotes();
     </script>
 </body>
 </html>
