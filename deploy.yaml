@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: app
-        image: sentinel-app:v7
+        image: recoverx:v5
         imagePullPolicy: Never
         ports:
         - containerPort: 5000
