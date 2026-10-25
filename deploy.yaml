@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sentinel-app
+  name: recoverx-app
   labels:
-    app: sentinel-app
+    app: recoverx-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: sentinel-app
+      app: recoverx-app
   template:
     metadata:
       labels:
-        app: sentinel-app
+        app: recoverx-app
     spec:
       containers:
       - name: app
@@ -49,11 +49,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sentinel-app-svc
+  name: recoverx-app-svc
 spec:
   type: NodePort
   selector:
-    app: sentinel-app
+    app: recoverx-app
   ports:
     - port: 5000
       targetPort: 5000
