@@ -1,4 +1,4 @@
-name: Build and Scan Sentinel App
+name: Build and Scan RecoverX
 
 on:
   push:
@@ -19,12 +19,12 @@ jobs:
 
     - name: Build Docker Image
       run: |
-        docker build -t sentinel-app:test .
+        docker build -t recoverx:test .
 
     - name: Run Trivy Vulnerability Scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'sentinel-app:test'
+        image-ref: 'recoverx:test'
         format: 'table'
         exit-code: '1'
         ignore-unfixed: true
