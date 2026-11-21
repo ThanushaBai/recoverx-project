@@ -12,7 +12,7 @@ RecoverX is a full-stack, stateful application deployed on a lightweight Kuberne
 - **Secure CI/CD Pipeline:** GitHub Actions automates the build process and uses Trivy to scan for vulnerabilities. The pipeline blocks deployments if HIGH/CRITICAL CVEs are found.
 
 ## 🏗️ Architecture
-![Architecture Diagram](./screenshots/00-architecture.png)
+![RecoverX Architecture](./screenshots/00-architecture.png)
 
 ---
 
@@ -53,8 +53,8 @@ An attempt to force-delete the backup fails with a hard `WORM protected` error, 
 **CI/CD & Security:** GitHub Actions, Trivy
 
 ---
-## 💡 Project Impact & Lessons Learned
 
+## 💡 Project Impact & Lessons Learned
 Building RecoverX taught me that **backups are not a backup until they are tested.** 
 
 In a real-world scenario, a backup that is easily accessible to an attacker is useless. By implementing **WORM (Write Once Read Many)** compliance, I ensured that even if an attacker gains root access, the recovery path remains secure. 
