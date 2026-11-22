@@ -2,6 +2,12 @@
 
 **Immutable Protection. Verified Recovery.**
 
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![MinIO](https://img.shields.io/badge/MinIO-C7202C?style=for-the-badge&logo=minio&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
+
 RecoverX is a full-stack, stateful application deployed on a lightweight Kubernetes (K3s) cluster. It features an interactive Cybersecurity Command Center that allows engineers to simulate ransomware attacks and demonstrate real-time, automated disaster recovery using MinIO S3 Object Lock (WORM).
 
 ## 🚀 Key Features
